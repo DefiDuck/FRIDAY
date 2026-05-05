@@ -2,7 +2,7 @@
 
 **F**ocus · **R**eview · **I**ntelligence · **D**aily · **A**nalysis · **Y**ield
 
-A Windows tray journal for traders. Sticky note app fine-tuned to trading psychology — end of day you write what happened, next morning F.R.I.D.A.Y. reminds you what you did yesterday and flags the patterns. Revenge entries, FOMO chases, the lies you tell yourself when you blow up a setup.
+A Windows tray journal for traders. Sticky note app fine-tuned to trading psychology: end of day you write what happened, next morning F.R.I.D.A.Y. reminds you what you did yesterday and flags the patterns. Revenge entries, FOMO chases, the lies you tell yourself when you blow up a setup.
 
 Status: pre-beta. Closed beta launches after v0.1.6.
 
@@ -92,7 +92,7 @@ scripts/                   build helpers (copy-assets, smoke tests)
 
 The Strategic Review, Work Orders, locked UX decisions, and the Gemini Deep Research output live OUTSIDE the repo at `C:\Users\ninov\Desktop\Research-Phase\` — design intent stays separate from source.
 
-The most important architectural reference is `DECISIONS_LOCKED_FRIDAY_UX.md` (canonical UX decisions, design tokens, anti-patterns). Read it before opening a fresh ClaudeCode session.
+The most important architectural reference is `DECISIONS_LOCKED_FRIDAY_UX.md` (canonical UX decisions, design tokens, anti-patterns). Read it.
 
 ## Running tests during development
 
