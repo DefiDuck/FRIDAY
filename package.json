@@ -1,0 +1,23 @@
+{
+  "name": "friday",
+  "version": "0.1.5",
+  "private": true,
+  "description": "F.R.I.D.A.Y. — Focus, Review, Intelligence, Daily, Analysis, Yield. A Windows tray journal for traders.",
+  "main": "dist/main/main.js",
+  "scripts": {
+    "build:main": "tsc -p tsconfig.main.json",
+    "build:renderer": "tsc -p tsconfig.renderer.json",
+    "copy:assets": "node scripts/copy-assets.mjs",
+    "build": "npm run build:main && npm run build:renderer && npm run copy:assets",
+    "start": "npm run build && electron .",
+    "dev": "npm run build && electron . --dev",
+    "test": "npm run build:main && node --test dist/main/secrets/__tests__/secrets.test.js dist/main/__tests__/store-briefing-filter.test.js dist/main/__tests__/pattern-report-helpers.test.js",
+    "clean": "rimraf dist"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "electron": "^30.0.0",
+    "rimraf": "^5.0.5",
+    "typescript": "^5.4.0"
+  }
+}

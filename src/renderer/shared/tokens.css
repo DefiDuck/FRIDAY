@@ -1,0 +1,85 @@
+/* ── F.R.I.D.A.Y. Design Tokens ─────────────────────────────────────────────
+ *
+ * Single source of truth for all renderer colours, type, spacing, radii.
+ * Locked by DECISIONS_LOCKED §6.2 (palette), §6.3 (typography),
+ * §6.4 (spacing/radii/animation), §6.5 (pattern saturation), §6.6
+ * (gradient backdrop alphas).
+ *
+ * Adding a colour or font here should be deliberate and mirror a
+ * decision in DECISIONS_LOCKED. Window-level CSS must reference these
+ * via var(--token); never re-introduce hard-coded hex outside this file.
+ *
+ * Reviewed against the work-order grep gate (AC #1, #3, #4):
+ *   grep -r "--bg-base:" src/renderer/        → exactly one hit (this file)
+ *   grep -rE "#[0-9A-Fa-f]{6}" src/renderer/   → only this file's tokens
+ *   grep -rE "font-family:\s*[\"']" src/renderer/ → only shared/
+ * ────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* Backgrounds */
+  --bg-base:     #0E1014;
+  --bg-elevated: #171A20;
+  --bg-input:    #1E222A;
+
+  /* Borders */
+  --border-subtle: #262A33;
+
+  /* Text */
+  --text-primary:   #E6E8EC;
+  --text-secondary: #9AA0A8;
+  --text-tertiary:  #5C6370;
+
+  /* Accents — Odysseus Teal, the single brand colour */
+  --accent-teal:      #3CC2A8;
+  --accent-teal-soft: #3CC2A833;  /* 20% — focus rings, hover, pills */
+  --accent-teal-08:   #3CC2A814;  /* 8%  — gradient backdrop top-right */
+  --accent-teal-04:   #3CC2A80A;  /* 4%  — gradient backdrop bottom-left */
+  /* Slightly brighter teal used for primary-button :hover. Listed here so
+     the primary-hover ramp is documented alongside the base. */
+  --accent-teal-hi:   #4FD4BB;
+  /* Dark text used on the teal button — DECISIONS §6.2 ‘button.primary
+     color’; locked separately because it’s not a re-use of bg-base. */
+  --on-accent:        #06231D;
+
+  /* Pattern markers — 18% desaturated vs typical web red/green per §6.5 */
+  --pattern-positive: #7BB874;
+  --pattern-negative: #C97C7C;
+  --status-error:     #D9534F;
+
+  /* Status accents (legacy non-teal greens/reds used by status dots,
+     toast tints). Kept narrow — DECISIONS §1.6 lets us style transient
+     statuses with the same palette. */
+  --status-warn:      #ffb366;
+
+  /* Typography — local-only fallbacks; CDN loading is rejected by §7.2. */
+  --font-prose: 'Inter Variable', 'Inter', -apple-system, BlinkMacSystemFont,
+                'Segoe UI', Roboto, sans-serif;
+  --font-mono:  'IBM Plex Mono', ui-monospace, Consolas, 'Courier New', monospace;
+
+  /* Spacing scale — 4 / 8 / 12 / 16 / 24 / 32 / 48 px (§6.4) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  /* Radii — never fully square, never pill-rounded (§6.4) */
+  --radius-sm: 6px;   /* inputs, small cards */
+  --radius-md: 10px;  /* modals, large cards */
+
+  /* Animation — easing curves and durations (DECISIONS_LOCKED §11.1).
+     v0.1.3 carried compound shorthands here ("150ms ease-out"). v0.1.4
+     splits the two concerns so animations.css can compose duration ×
+     curve precisely per §11.2 (button press, modal entry, etc.). All
+     existing usage sites in base.css were updated in lockstep. */
+  --ease-quick:  cubic-bezier(0.16, 1, 0.3, 1);     /* spring-out, 80–150ms interactions */
+  --ease-modal:  cubic-bezier(0.32, 0.72, 0, 1);    /* gentle, 200–300ms entries */
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1); /* slight overshoot, button release */
+
+  --dur-instant: 80ms;   /* button press feedback */
+  --dur-quick:   150ms;  /* hover state changes, popover, status flashes */
+  --dur-modal:   220ms;  /* window/modal entry */
+  --dur-slow:    320ms;  /* full-screen transitions (briefing overlay) */
+}

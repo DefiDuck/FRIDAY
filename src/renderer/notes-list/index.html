@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy"
+          content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self';" />
+    <link rel="stylesheet" href="../shared/base.css" />
+    <title>F.R.I.D.A.Y. — All notes</title>
+    <style>
+      /* Window-specific layout for the v0.1.5 "All notes" window.
+         Tokens come from shared/tokens.css; this file owns only the
+         frame, header, list+card layout, and expand/collapse styling. */
+
+      html, body {
+        height: 100%; width: 100%;
+        user-select: none;
+        overflow: hidden;
+      }
+      .frame {
+        display: flex; flex-direction: column;
+        height: 100%; width: 100%;
+      }
+
+      /* ── Titlebar ─────────────────────────────────────────────────── */
+      .titlebar {
+        -webkit-app-region: drag;
+        display: flex; align-items: center; justify-content: space-between;
+        padding: var(--space-2) var(--space-4);
+        font-size: 11px; letter-spacing: .8px; text-transform: uppercase;
+        color: var(--text-secondary);
+        border-bottom: 1px solid var(--border-subtle);
+        background: var(--bg-elevated);
+        flex-shrink: 0;
+      }
+      .titlebar .t {
+        font-weight: 600; color: var(--text-primary);
+        letter-spacing: .3px; text-transform: none;
+      }
+      .titlebar button {
+        -webkit-app-region: no-drag;
+        background: transparent; border: 0; color: var(--text-secondary);
+        font-size: 14px; padding: 2px 6px; border-radius: 3px;
+      }
+      .titlebar button:hover {
+        background: var(--bg-input); color: var(--text-primary);
+      }
+
+      /* ── Header summary ──────────────────────────────────────────── */
+      .header {
+        padding: var(--space-4) var(--space-5) var(--space-3);
+        flex-shrink: 0;
+      }
+      .header .summary {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--text-secondary);
+        letter-spacing: 0.02em;
+      }
+      .header .divider {
+        margin-top: var(--space-3);
+        border-top: 1px solid var(--border-subtle);
+      }
+
+      /* ── List body ────────────────────────────────────────────────── */
+      .list {
+        flex: 1; overflow-y: auto;
+        padding: var(--space-3) var(--space-5) var(--space-5);
+        display: flex; flex-direction: column;
+        gap: var(--space-3);
+      }
+
+      /* ── Note card ────────────────────────────────────────────────── */
+      .note-card {
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        transition: border-color var(--dur-quick) var(--ease-quick);
+      }
+      .note-card:hover { border-color: var(--text-tertiary); }
+      .note-card.expanded { border-color: var(--accent-teal-soft); }
+
+      .note-head {
+        display: flex; align-items: flex-start; gap: var(--space-3);
+        padding: var(--space-3) var(--space-4);
+        cursor: pointer;
+        user-select: none;
+      }
+      .note-head .meta-col { flex: 1; min-width: 0; }
+      .note-head .date {
+        font-family: var(--font-mono);
+        font-size: 11.5px;
+        color: var(--text-secondary);
+        margin-bottom: 4px;
+        letter-spacing: 0.02em;
+      }
+      .note-head .preview {
+        color: var(--text-primary);
+        font-size: 13px;
+        line-height: 1.5;
+        /* Two-line truncation when collapsed. */
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .note-card.expanded .note-head .preview {
+        /* Hide the preview on expand — full body is shown below. */
+        display: none;
+      }
+      .note-head .chevron {
+        flex-shrink: 0;
+        margin-top: 2px;
+        font-size: 10px;
+        color: var(--text-tertiary);
+        transition: transform var(--dur-quick) var(--ease-quick),
+                    color var(--dur-quick) var(--ease-quick);
+      }
+      .note-card.expanded .note-head .chevron {
+        transform: rotate(180deg);
+        color: var(--accent-teal);
+      }
+      .note-head .pattern-pill {
+        flex-shrink: 0;
+        font-size: 10px; font-weight: 600;
+        text-transform: uppercase; letter-spacing: 0.04em;
+        color: var(--text-tertiary);
+        background: var(--bg-input);
+        padding: 2px 7px;
+        border-radius: 999px;
+        margin-top: 1px;
+        font-family: var(--font-mono);
+      }
+      .note-head .pattern-pill.has-patterns {
+        color: var(--accent-teal);
+        background: var(--accent-teal-soft);
+      }
+
+      /* Body slides open via max-height transition. The actual content
+         height is unknown, so we cap with a generous 4000px ceiling —
+         enough for any plausible journal entry plus its pattern list. */
+      .note-body {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height var(--dur-modal) var(--ease-modal);
+        border-top: 0 solid var(--border-subtle);
+      }
+      .note-card.expanded .note-body {
+        max-height: 4000px;
+        border-top-width: 1px;
+      }
+
+      .note-body .full-text {
+        padding: var(--space-3) var(--space-4);
+        color: var(--text-primary);
+        font-size: 13px;
+        line-height: 1.6;
+        white-space: pre-wrap;
+        user-select: text;
+      }
+      .note-body .patterns-section {
+        padding: var(--space-3) var(--space-4) var(--space-4);
+        border-top: 1px solid var(--border-subtle);
+      }
+      .note-body .patterns-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-secondary);
+        margin-bottom: var(--space-2);
+      }
+      .note-body .pattern-row {
+        display: flex; align-items: flex-start; gap: var(--space-3);
+        padding: 4px 0;
+        font-size: 12.5px;
+        line-height: 1.5;
+      }
+      .note-body .pattern-row .dot {
+        width: 8px; height: 8px; border-radius: 50%;
+        margin-top: 6px; flex-shrink: 0;
+      }
+      .note-body .pattern-row .dot.pos { background: var(--pattern-positive); }
+      .note-body .pattern-row .dot.neg { background: var(--pattern-negative); }
+
+      /* The canonical word inside an expanded card is wired to the
+         shared popover module — same hover/click behaviour as the
+         briefing's in-prose markers. Class name kept identical to the
+         briefing's in-body markers so the existing CSS in animations.css
+         picks up the cursor affordance. */
+      .note-body .pattern-row .pattern-marker {
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .note-body .pattern-row .pattern-marker.positive { color: var(--pattern-positive); }
+      .note-body .pattern-row .pattern-marker.negative { color: var(--pattern-negative); }
+
+      .note-body .pattern-row .matched {
+        color: var(--text-secondary);
+        font-style: italic;
+        font-family: var(--font-mono);
+        font-size: 11.5px;
+      }
+      .note-body .pattern-row .src-tag {
+        margin-left: auto;
+        font-size: 9.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-tertiary);
+        padding-top: 4px;
+      }
+
+      /* ── Empty state ──────────────────────────────────────────────── */
+      .empty-state {
+        flex: 1;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        padding: 0 var(--space-6) var(--space-6);
+        gap: var(--space-3);
+        text-align: center;
+      }
+      .empty-state h2 {
+        font-size: 17px;
+        font-weight: 500;
+        color: var(--text-primary);
+      }
+      .empty-state p {
+        font-size: 13px;
+        color: var(--text-secondary);
+        max-width: 360px;
+        margin: 0;
+        line-height: 1.6;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="frame">
+      <div class="titlebar">
+        <span class="t">All notes</span>
+        <button id="close-btn" aria-label="Close (Esc)">✕</button>
+      </div>
+      <div class="header" id="header" hidden>
+        <div class="summary" id="summary">— notes</div>
+        <div class="divider"></div>
+      </div>
+      <div class="list" id="list" hidden></div>
+      <div class="empty-state" id="empty-state" hidden>
+        <h2>No notes yet.</h2>
+        <p>Write your first note from the tray menu — “Write today’s note”.</p>
+      </div>
+    </div>
+    <script type="module" src="./notes-list.js"></script>
+  </body>
+</html>

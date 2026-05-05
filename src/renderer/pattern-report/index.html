@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy"
+          content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self';" />
+    <link rel="stylesheet" href="../shared/base.css" />
+    <title>F.R.I.D.A.Y. — Pattern report</title>
+    <style>
+      /* Window-specific layout for the v0.1.5 Pattern Report.
+         Tokens come from shared/tokens.css; this file owns the
+         frame, header, pattern-card layout, classification pills,
+         and the bottom Refresh affordance. */
+
+      html, body {
+        height: 100%; width: 100%;
+        user-select: none;
+        overflow: hidden;
+      }
+      .frame {
+        display: flex; flex-direction: column;
+        height: 100%; width: 100%;
+      }
+
+      /* ── Titlebar ─────────────────────────────────────────────────── */
+      .titlebar {
+        -webkit-app-region: drag;
+        display: flex; align-items: center; justify-content: space-between;
+        padding: var(--space-2) var(--space-4);
+        font-size: 11px; letter-spacing: .8px; text-transform: uppercase;
+        color: var(--text-secondary);
+        border-bottom: 1px solid var(--border-subtle);
+        background: var(--bg-elevated);
+        flex-shrink: 0;
+      }
+      .titlebar .t {
+        font-weight: 600; color: var(--text-primary);
+        letter-spacing: .3px; text-transform: none;
+      }
+      .titlebar button {
+        -webkit-app-region: no-drag;
+        background: transparent; border: 0; color: var(--text-secondary);
+        font-size: 14px; padding: 2px 6px; border-radius: 3px;
+      }
+      .titlebar button:hover {
+        background: var(--bg-input); color: var(--text-primary);
+      }
+
+      /* ── Header summary ──────────────────────────────────────────── */
+      .header {
+        padding: var(--space-4) var(--space-5) var(--space-3);
+        flex-shrink: 0;
+      }
+      .header h2 {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0 0 4px 0;
+      }
+      .header .summary {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--text-secondary);
+        letter-spacing: 0.02em;
+      }
+      .header .divider {
+        margin-top: var(--space-3);
+        border-top: 1px solid var(--border-subtle);
+      }
+
+      /* ── List body ────────────────────────────────────────────────── */
+      .list {
+        flex: 1; overflow-y: auto;
+        padding: var(--space-3) var(--space-5) var(--space-4);
+        display: flex; flex-direction: column;
+        gap: var(--space-3);
+      }
+      .group-label {
+        font-size: 10.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-tertiary);
+        margin: var(--space-3) 0 0 0;
+      }
+      .group-label:first-child { margin-top: 0; }
+
+      /* ── Pattern card ─────────────────────────────────────────────── */
+      .pattern-card {
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        padding: var(--space-4) var(--space-5);
+      }
+      .pattern-card .head {
+        display: flex; align-items: center; gap: var(--space-3);
+        margin-bottom: var(--space-2);
+      }
+      .pattern-card .dot {
+        width: 9px; height: 9px; border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .pattern-card .dot.pos { background: var(--pattern-positive); }
+      .pattern-card .dot.neg { background: var(--pattern-negative); }
+
+      .pattern-card .pattern-marker {
+        font-weight: 600;
+        font-size: 15px;
+        cursor: pointer;
+      }
+      .pattern-card .pattern-marker.positive { color: var(--pattern-positive); }
+      .pattern-card .pattern-marker.negative { color: var(--pattern-negative); }
+
+      /* Classification pill — three styles (work-order §8 AC #8). */
+      .classification-pill {
+        margin-left: auto;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        padding: 3px 9px;
+        border-radius: 999px;
+        font-family: var(--font-prose);
+      }
+      .classification-pill.pattern {
+        background: var(--accent-teal-soft);
+        color: var(--accent-teal);
+      }
+      .classification-pill.habit {
+        background: var(--accent-teal);
+        color: var(--on-accent);
+      }
+      .classification-pill.occasional {
+        background: transparent;
+        color: var(--text-tertiary);
+        border: 1px solid var(--border-subtle);
+      }
+
+      .pattern-card .meta {
+        font-family: var(--font-mono);
+        font-size: 11.5px;
+        color: var(--text-secondary);
+        line-height: 1.6;
+        letter-spacing: 0.02em;
+      }
+      .pattern-card .meta .label {
+        color: var(--text-tertiary);
+      }
+      .pattern-card .matches {
+        margin-top: var(--space-3);
+        padding-top: var(--space-3);
+        border-top: 1px solid var(--border-subtle);
+      }
+      .pattern-card .matches .matched-line {
+        font-family: var(--font-prose);
+        font-style: italic;
+        font-size: 12.5px;
+        color: var(--text-secondary);
+        line-height: 1.5;
+        padding: 2px 0;
+      }
+      .pattern-card .matches .matched-line::before {
+        content: '"';
+        margin-right: 1px;
+      }
+      .pattern-card .matches .matched-line::after {
+        content: '"';
+        margin-left: 1px;
+      }
+
+      /* ── Footer (Generated + Refresh) ─────────────────────────────── */
+      .footer {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: var(--space-3) var(--space-5);
+        border-top: 1px solid var(--border-subtle);
+        background: var(--bg-elevated);
+        flex-shrink: 0;
+      }
+      .footer .generated {
+        font-size: 11px;
+        font-family: var(--font-mono);
+        color: var(--text-tertiary);
+        letter-spacing: 0.02em;
+      }
+      .footer button {
+        font-size: 12px;
+        padding: 6px 14px;
+      }
+
+      /* ── Empty state ──────────────────────────────────────────────── */
+      .empty-state {
+        flex: 1;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        padding: 0 var(--space-6) var(--space-6);
+        gap: var(--space-3);
+        text-align: center;
+      }
+      .empty-state h2 {
+        font-size: 17px;
+        font-weight: 500;
+        color: var(--text-primary);
+      }
+      .empty-state p {
+        font-size: 13px;
+        color: var(--text-secondary);
+        max-width: 380px;
+        margin: 0;
+        line-height: 1.6;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="frame">
+      <div class="titlebar">
+        <span class="t">Pattern report</span>
+        <button id="close-btn" aria-label="Close (Esc)">✕</button>
+      </div>
+      <div class="header" id="header" hidden>
+        <h2>Pattern report · last 30 days</h2>
+        <div class="summary" id="summary">— notes · — patterns</div>
+        <div class="divider"></div>
+      </div>
+      <div class="list" id="list" hidden></div>
+      <div class="empty-state" id="empty-state" hidden>
+        <h2>Not enough notes yet.</h2>
+        <p>Write a few daily notes (3 minimum) and check back. The report shows patterns across your last 30 days of journaling.</p>
+      </div>
+      <div class="footer" id="footer" hidden>
+        <span class="generated" id="generated">Generated: —</span>
+        <button id="refresh-btn" class="secondary">Refresh</button>
+      </div>
+    </div>
+    <script type="module" src="./pattern-report.js"></script>
+  </body>
+</html>

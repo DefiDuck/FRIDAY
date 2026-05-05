@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy"
+          content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self';" />
+    <link rel="stylesheet" href="../shared/base.css" />
+    <title>F.R.I.D.A.Y. — Morning Briefing</title>
+    <style>
+      /* Window-specific layout for the morning briefing card.
+         Tokens come from shared/tokens.css; this file owns only the
+         centred card layout, the in-body pattern-marker styling
+         (concern/strength × pattern/habit × lexicon/AI), and the
+         entry animation. */
+
+      html, body {
+        height: 100%; width: 100%; overflow: hidden;
+        user-select: none;
+        font-size: 15px;
+        animation: fadeIn .35s ease-out;
+      }
+      @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+      .drag { -webkit-app-region: drag; height: 28px; width: 100%; }
+
+      .wrap {
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        min-height: calc(100% - 28px);
+        padding: 0 var(--space-7) var(--space-6);
+        gap: 26px;
+        text-align: center;
+      }
+      .greeting {
+        font-size: 13px; letter-spacing: 2px; text-transform: uppercase;
+        color: var(--text-secondary);
+      }
+      .date {
+        font-size: 34px; font-weight: 300; letter-spacing: -0.5px;
+        color: var(--text-primary);
+      }
+
+      /* ── Briefing card ────────────────────────────────────────────── */
+      .card {
+        /* Override the shared .card defaults to suit the briefing's
+           wider layout and stronger drop shadow. */
+        padding: 20px var(--space-5);
+        width: 100%; max-width: 640px;
+        text-align: left;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+      }
+      .card .card-label {
+        font-size: 11px; letter-spacing: 1.4px; text-transform: uppercase;
+        color: var(--accent-teal);
+        margin-bottom: 10px; font-weight: 600;
+      }
+      .card .card-meta {
+        font-size: 12px; color: var(--text-secondary);
+        margin-bottom: var(--space-2);
+      }
+      .card .card-body {
+        font-size: 14.5px; line-height: 1.65;
+        color: var(--text-primary);
+        white-space: pre-wrap;
+        user-select: text;
+      }
+      .card.empty .card-body { color: var(--text-secondary); font-style: italic; }
+
+      /* ── In-body pattern markers ──────────────────────────────────────
+       * Two orthogonal axes per span:
+       *   VALENCE  – mark-concern  (--pattern-negative)
+       *              mark-strength (--pattern-positive)
+       *   TIER     – tier-pattern  (dotted underline,  3+ in 14d)
+       *              tier-habit    (solid underline,   5+ in 30d, bolder)
+       * Hover tooltip surfaces canonical + count + window.
+       *
+       * Note: the v0.1.2 implementation used hard-coded amber/green RGBA
+       * tints for the underlines. Migrated to derive from the desaturated
+       * tokens (§6.5) — the underline colour matches the marker text.
+       * ──────────────────────────────────────────────────────────────── */
+      .card .card-body span[class*="mark-"] { cursor: help; }
+
+      /* Concern (negative valence) */
+      .card .card-body .mark-concern.tier-pattern {
+        border-bottom: 1px dotted var(--pattern-negative);
+      }
+      .card .card-body .mark-concern.tier-habit {
+        border-bottom: 1.5px solid var(--pattern-negative);
+        color: var(--pattern-negative);
+        font-weight: 500;
+      }
+
+      /* Strength (positive valence) */
+      .card .card-body .mark-strength.tier-pattern {
+        border-bottom: 1px dotted var(--pattern-positive);
+      }
+      .card .card-body .mark-strength.tier-habit {
+        border-bottom: 1.5px solid var(--pattern-positive);
+        color: var(--pattern-positive);
+        font-weight: 500;
+      }
+
+      /* AI-sourced matches: wavy underline so the eye distinguishes
+         deterministic (lexicon) from semantic (model) observations. */
+      .card .card-body .src-ai {
+        border-bottom: none;
+        text-decoration: underline wavy;
+        text-decoration-thickness: 1px;
+        text-underline-offset: 3px;
+      }
+      .card .card-body .mark-concern.src-ai  { text-decoration-color: var(--pattern-negative); }
+      .card .card-body .mark-strength.src-ai { text-decoration-color: var(--pattern-positive); }
+
+      /* ── Footer whisper ───────────────────────────────────────────── */
+      .whisper {
+        font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
+        color: var(--text-secondary);
+        margin-top: -12px;
+      }
+      .whisper.hidden { display: none; }
+
+      /* ── Action buttons ───────────────────────────────────────────── */
+      .actions { display: flex; gap: 10px; }
+      /* Briefing buttons sit a touch larger than the shared default. */
+      button { padding: 10px 22px; font-size: 13px; }
+
+      .hint {
+        font-size: 11px; color: var(--text-tertiary);
+        margin-top: -8px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="drag"></div>
+    <div class="wrap">
+      <div class="greeting">Morning briefing</div>
+      <div class="date" id="date-label">—</div>
+      <div class="card" id="card">
+        <div class="card-label" id="card-label">Last reflection</div>
+        <div class="card-meta" id="card-meta"></div>
+        <div class="card-body" id="card-body">Loading…</div>
+      </div>
+      <div class="whisper hidden" id="whisper"></div>
+      <div class="actions">
+        <button id="write-btn" class="primary">Write today's note</button>
+        <button id="dismiss-btn" class="secondary">Dismiss</button>
+      </div>
+      <div class="hint">Esc or Enter dismisses</div>
+    </div>
+    <script type="module" src="./briefing.js"></script>
+  </body>
+</html>

@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy"
+          content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self';" />
+    <link rel="stylesheet" href="../shared/base.css" />
+    <title>F.R.I.D.A.Y. — Setup</title>
+    <style>
+      /* Window-specific layout for the onboarding wizard.
+         All colours, fonts, spacing come from shared/tokens.css via
+         var(--token); this file owns only the wizard's screen
+         transitions, step indicator, and provider-card layout. */
+
+      html, body {
+        height: 100%; width: 100%; overflow: hidden;
+        user-select: none;
+        animation: fadeIn .3s ease-out;
+      }
+      @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+      .drag { -webkit-app-region: drag; height: 28px; width: 100%; position: relative; }
+
+      /* ── Step indicator ───────────────────────────────────────────── */
+      .step-indicator {
+        position: absolute; top: 6px; right: 14px;
+        font-size: 10.5px; letter-spacing: 1.2px; text-transform: uppercase;
+        color: var(--text-tertiary);
+        -webkit-app-region: no-drag;
+        font-family: var(--font-mono);
+      }
+      .step-indicator .cur { color: var(--accent-teal); }
+
+      /* ── Screen container ──────────────────────────────────────────── */
+      .screens { position: relative; height: calc(100% - 28px); overflow: hidden; }
+      .screen {
+        position: absolute; inset: 0;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        padding: 0 var(--space-6) var(--space-6);
+        gap: var(--space-4);
+        text-align: center;
+        opacity: 0; pointer-events: none;
+        transition: opacity .25s ease, transform .25s ease;
+        transform: translateX(40px);
+      }
+      .screen.active {
+        opacity: 1; pointer-events: auto;
+        transform: translateX(0);
+      }
+
+      /* ── Typography (window-specific composition) ─────────────────── */
+      .logo {
+        font-size: 26px; font-weight: 300; letter-spacing: 2px;
+        text-transform: uppercase; color: var(--accent-teal);
+      }
+      .logo span { font-weight: 600; }
+      .subtitle {
+        font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
+        color: var(--text-secondary); margin-top: -8px;
+      }
+      .desc {
+        font-size: 13.5px; color: var(--text-secondary);
+        max-width: 420px; line-height: 1.65;
+      }
+      .privacy-headline {
+        font-size: 19px; font-weight: 500; max-width: 380px; line-height: 1.4;
+        color: var(--text-primary); margin: 4px 0 0 0;
+      }
+      .welcome-body {
+        /* DECISIONS_LOCKED §7.1 — sets product voice ("Friday is watching..."). */
+        font-size: 14px; line-height: 1.5;
+        color: var(--text-secondary);
+        max-width: 440px; margin: 0;
+      }
+      h2 { font-size: 17px; font-weight: 500; margin: 0 0 4px; }
+
+      /* ── Provider cards ────────────────────────────────────────────── */
+      .providers {
+        display: flex; flex-direction: column; gap: var(--space-2);
+        width: 100%; max-width: 420px;
+      }
+      .pcard {
+        display: flex; align-items: center; gap: var(--space-3);
+        background: var(--bg-elevated);
+        border: 1.5px solid var(--border-subtle);
+        /* 8px — between --radius-sm (6px) and --radius-md (10px). The
+           card is provider-specific, not a generic .card surface. */
+        border-radius: 8px;
+        padding: var(--space-3) var(--space-4);
+        cursor: pointer;
+        transition: border-color var(--ease-quick), background var(--ease-quick);
+      }
+      .pcard:hover { border-color: var(--text-tertiary); background: var(--bg-input); }
+      .pcard.selected {
+        border-color: var(--accent-teal);
+        background: var(--accent-teal-soft);
+      }
+      .pcard .radio {
+        width: 16px; height: 16px; border-radius: 50%;
+        border: 2px solid var(--text-secondary);
+        flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center;
+        transition: border-color var(--ease-quick);
+      }
+      .pcard.selected .radio { border-color: var(--accent-teal); }
+      .pcard.selected .radio::after {
+        content: ''; width: 8px; height: 8px; border-radius: 50%;
+        background: var(--accent-teal);
+      }
+      .pcard .info { text-align: left; }
+      .pcard .pname { font-weight: 600; font-size: 13.5px; }
+      .pcard .ptag  { font-size: 11.5px; color: var(--text-secondary); }
+      .pcard .badge {
+        font-size: 9px; font-weight: 700; text-transform: uppercase;
+        letter-spacing: .8px;
+        color: var(--accent-teal); background: var(--accent-teal-soft);
+        padding: 2px 7px; border-radius: 3px;
+        margin-left: auto; flex-shrink: 0;
+      }
+
+      /* ── Setup boxes ───────────────────────────────────────────────── */
+      .setup-box {
+        width: 100%; max-width: 420px; text-align: left;
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        padding: var(--space-4) var(--space-5);
+      }
+      .setup-box + .setup-box { margin-top: 10px; }
+      .setup-box .label {
+        display: block; font-size: 11px; color: var(--text-secondary);
+        text-transform: uppercase; letter-spacing: .5px;
+        margin-bottom: 6px;   /* between --space-1 (4) and --space-2 (8) */
+      }
+      .setup-box input[type="text"],
+      .setup-box input[type="password"],
+      .setup-box input[type="time"] { width: 100%; }
+      .setup-box .help {
+        font-size: 11px; color: var(--text-secondary);
+        margin-top: 6px; line-height: 1.5;
+      }
+      .row2 { display: flex; gap: var(--space-3); }
+      .row2 > .col { flex: 1; }
+      .status-row {
+        display: flex; align-items: center; gap: var(--space-2);
+        font-size: 12.5px; margin-top: 10px;
+      }
+      .status-dot {
+        width: 8px; height: 8px; border-radius: 50%;
+        background: var(--text-secondary);
+        flex-shrink: 0;
+      }
+      .status-dot.ok      { background: var(--accent-teal); }
+      .status-dot.err     { background: var(--status-error); }
+      .status-dot.checking{
+        background: var(--status-warn);
+        animation: pulse .8s ease-in-out infinite alternate;
+      }
+      @keyframes pulse { from { opacity: .4; } to { opacity: 1; } }
+
+      /* ── Step 4: Try It Out ───────────────────────────────────────── */
+      .try-textarea {
+        width: 100%; max-width: 480px; min-height: 160px;
+        padding: var(--space-3) var(--space-4);
+        line-height: 1.55;
+      }
+      .try-help {
+        font-size: 11.5px; color: var(--text-tertiary);
+        max-width: 480px; line-height: 1.5; margin-top: -4px;
+      }
+      .gen-status {
+        font-size: 12.5px; color: var(--text-secondary);
+        margin-top: var(--space-2);
+        font-family: var(--font-mono);
+      }
+      .gen-status.hidden { display: none; }
+      .gen-status .spinner {
+        display: inline-block; width: 10px; height: 10px;
+        border: 2px solid var(--accent-teal-soft);
+        border-top-color: var(--accent-teal);
+        border-radius: 50%;
+        animation: spin .9s linear infinite;
+        vertical-align: middle; margin-right: var(--space-2);
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+
+      /* ── Step 4 result: sample briefing ───────────────────────────── */
+      .briefing-card {
+        position: relative;
+        width: 100%; max-width: 480px; text-align: left;
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        padding: 18px var(--space-5);
+      }
+      .briefing-card .sample-pill {
+        position: absolute; top: 14px; right: 16px;
+        font-size: 9.5px; font-weight: 700; letter-spacing: .8px;
+        text-transform: uppercase;
+        color: var(--accent-teal); background: var(--accent-teal-soft);
+        padding: 3px 8px; border-radius: 4px;
+      }
+      .briefing-card h3 { font-size: 14.5px; margin: 0 0 var(--space-3) 0; }
+      .pattern-row {
+        display: flex; align-items: flex-start; gap: 10px;
+        padding: 6px 0;
+        font-size: 13px; line-height: 1.5;
+      }
+      .pattern-row .dot {
+        width: 8px; height: 8px; border-radius: 50%;
+        margin-top: 7px; flex-shrink: 0;
+      }
+      .pattern-row .dot.pos { background: var(--pattern-positive); }
+      .pattern-row .dot.neg { background: var(--pattern-negative); }
+      .pattern-row .label { font-weight: 600; }
+      .pattern-row .label.pos { color: var(--pattern-positive); }
+      .pattern-row .label.neg { color: var(--pattern-negative); }
+      .pattern-row .matched {
+        color: var(--text-secondary); font-style: italic;
+        font-family: var(--font-mono); font-size: 12px;
+      }
+      .pattern-row .src-tag {
+        font-size: 9.5px; text-transform: uppercase; letter-spacing: .8px;
+        color: var(--text-tertiary); margin-left: auto; padding-top: 4px;
+      }
+      .briefing-divider {
+        border: 0; border-top: 1px solid var(--border-subtle);
+        margin: 14px 0;
+      }
+      .tomorrow-line {
+        font-size: 12px; color: var(--text-secondary); line-height: 1.55;
+      }
+      .tomorrow-line .time { color: var(--accent-teal); font-weight: 600; }
+      .briefing-empty {
+        font-size: 13px; color: var(--text-secondary); line-height: 1.6;
+      }
+
+      /* ── Buttons (extra layout the screens want around the shared
+           button styles from base.css) ──────────────────────────────── */
+      .actions { display: flex; gap: 10px; margin-top: 6px; }
+      .actions.spread { justify-content: space-between; width: 100%; max-width: 480px; }
+      /* Keep onboarding's larger CTA padding so the wizard feels weighty. */
+      button { padding: 10px 22px; }
+    </style>
+  </head>
+  <body>
+    <div class="drag">
+      <div class="step-indicator" id="step-indicator">Step <span class="cur" id="step-num">1</span> of 4</div>
+    </div>
+    <div class="screens">
+
+      <!-- ── Screen 1: Welcome ─────────────────────────────────────── -->
+      <!-- Headline locked by DECISIONS_LOCKED §7.1 — privacy-first marketing. -->
+      <div class="screen active" id="s-welcome" data-step="1">
+        <div class="logo"><span>F.R.I.D.A.Y.</span></div>
+        <div class="subtitle">Your trading journal companion</div>
+        <h2 class="privacy-headline">Your journal stays on your machine. Always.</h2>
+        <!-- Body copy locked 2026-04-28 by DECISIONS_LOCKED §7.1 — sets
+             product voice (slightly ominous Tony-Stark-inflected). -->
+        <p class="welcome-body">
+          Friday spots the patterns you can't see in the moment.
+          The revenge entries, the chases, the setups you talked yourself
+          out of. Friday knows. Friday is watching...
+        </p>
+        <div class="actions">
+          <button class="primary" id="btn-start">Get started</button>
+        </div>
+      </div>
+
+      <!-- ── Screen 2: Choose AI ───────────────────────────────────── -->
+      <div class="screen" id="s-choose" data-step="2">
+        <h2>Choose your AI engine</h2>
+        <div class="subtitle" style="margin-top:-12px">You can change this later in Settings</div>
+        <div class="providers" id="provider-list">
+          <div class="pcard" data-type="ollama">
+            <div class="radio"></div>
+            <div class="info">
+              <div class="pname">Ollama (local)</div>
+              <div class="ptag">Free, runs on your machine. No data leaves 127.0.0.1.</div>
+            </div>
+            <div class="badge">Recommended</div>
+          </div>
+          <div class="pcard" data-type="anthropic">
+            <div class="radio"></div>
+            <div class="info">
+              <div class="pname">Claude (Anthropic)</div>
+              <div class="ptag">Highest quality analysis. API key, ~$0.0001/note.</div>
+            </div>
+          </div>
+          <div class="pcard" data-type="openai">
+            <div class="radio"></div>
+            <div class="info">
+              <div class="pname">OpenAI (GPT)</div>
+              <div class="ptag">Solid quality. API key, ~$0.0001/note.</div>
+            </div>
+          </div>
+          <div class="pcard" data-type="gemini">
+            <div class="radio"></div>
+            <div class="info">
+              <div class="pname">Google Gemini</div>
+              <div class="ptag">Free tier available. API key required.</div>
+            </div>
+          </div>
+          <div class="pcard" data-type="none">
+            <div class="radio"></div>
+            <div class="info">
+              <div class="pname">Lexicon only</div>
+              <div class="ptag">No AI. Built-in pattern detection still works.</div>
+            </div>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="secondary" id="btn-choose-back">Back</button>
+          <button class="primary" id="btn-choose-next" disabled>Continue</button>
+        </div>
+      </div>
+
+      <!-- ── Screen 3: Provider setup ──────────────────────────────── -->
+      <div class="screen" id="s-setup" data-step="3">
+        <h2 id="setup-title">Set up Ollama</h2>
+
+        <!-- Ollama setup -->
+        <div class="setup-box" id="setup-ollama" hidden>
+          <span class="label">Model</span>
+          <input type="text" id="ollama-model" value="phi3.5" />
+          <div class="help">
+            Make sure Ollama is running. If you haven't pulled a model yet, open a
+            terminal and run: <code>ollama pull phi3.5</code>
+          </div>
+          <div class="status-row">
+            <div class="status-dot" id="ollama-dot"></div>
+            <span id="ollama-status">Not checked yet</span>
+          </div>
+          <div class="actions" style="margin-top:12px">
+            <button class="secondary" id="btn-ollama-check">Check connection</button>
+          </div>
+        </div>
+
+        <!-- API key setup (shared by anthropic, openai, gemini) -->
+        <div class="setup-box" id="setup-apikey" hidden>
+          <span class="label" id="apikey-label">API Key</span>
+          <input type="password" id="apikey-input" placeholder="sk-..." autocomplete="off" />
+          <div class="help" id="apikey-help"></div>
+          <div class="status-row">
+            <div class="status-dot" id="apikey-dot"></div>
+            <span id="apikey-status">Enter your key above</span>
+          </div>
+        </div>
+
+        <!-- None setup -->
+        <div class="setup-box" id="setup-none" hidden>
+          <div class="desc" style="text-align:left; margin:0; max-width:none">
+            No AI engine selected. F.R.I.D.A.Y. will use its built-in lexicon
+            to detect common trading patterns. You can connect an AI later in
+            Settings for deeper analysis.
+          </div>
+        </div>
+
+        <!-- Trading hours sub-section (DECISIONS_LOCKED §5.2 — captured in
+             onboarding so the scheduler is grounded from day 1). -->
+        <div class="setup-box">
+          <span class="label">Your trading hours</span>
+          <div class="row2">
+            <div class="col">
+              <span class="label" style="font-size:10px">Wake / briefing</span>
+              <input type="time" id="trading-wake" value="06:30" step="60" />
+            </div>
+            <div class="col">
+              <span class="label" style="font-size:10px">Session end</span>
+              <input type="time" id="trading-end" value="16:00" step="60" />
+            </div>
+          </div>
+          <div class="help">
+            The morning briefing fires at the wake time. The journal nudge
+            fires at session end. Adjust later in Settings if needed.
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="secondary" id="btn-setup-back">Back</button>
+          <button class="primary" id="btn-setup-next">Continue</button>
+        </div>
+      </div>
+
+      <!-- ── Screen 4: Try It Out ──────────────────────────────────── -->
+      <div class="screen" id="s-try" data-step="4">
+        <h2>Tell me about your last trading session.</h2>
+        <div class="desc" style="margin-top:-6px">
+          Try mentioning a setup you took, an emotion you felt, or what
+          you'd do differently.
+        </div>
+        <textarea
+          class="try-textarea"
+          id="try-input"
+          rows="8"
+          placeholder="Yesterday on ES I jumped in late on the breakout, got back at the market after the loss instead of stepping away. Should have stuck to my plan."
+        ></textarea>
+        <div class="try-help">
+          Your note never leaves this machine if you chose Ollama. You can
+          edit, delete, or open it later from the tray menu.
+        </div>
+        <div class="gen-status hidden" id="gen-status">
+          <span class="spinner"></span>
+          <span id="gen-status-text">Analyzing your note…</span>
+        </div>
+        <div class="actions spread">
+          <button class="subtle" id="btn-try-skip">Skip for now</button>
+          <button class="primary" id="btn-try-generate">Generate Briefing</button>
+        </div>
+      </div>
+
+      <!-- ── Screen 4 result: sample briefing preview ──────────────── -->
+      <!-- Same step number (4 of 4) — this is the "result" sub-state. -->
+      <div class="screen" id="s-result" data-step="4">
+        <div class="briefing-card" id="briefing-card">
+          <div class="sample-pill">Sample</div>
+          <h3 id="result-heading">Your sample briefing</h3>
+          <div id="result-body"><!-- patterns or empty/error message injected here --></div>
+          <hr class="briefing-divider" id="result-divider" />
+          <div class="tomorrow-line" id="result-tomorrow">
+            Tomorrow morning at <span class="time" id="result-tomorrow-time">06:30</span>
+            you'll see a briefing like this for your last 14 days of notes.
+          </div>
+        </div>
+        <div class="actions">
+          <button class="primary" id="btn-result-finish">Got it — Finish</button>
+        </div>
+      </div>
+
+    </div>
+    <script type="module" src="./onboarding.js"></script>
+  </body>
+</html>

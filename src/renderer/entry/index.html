@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy"
+          content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self';" />
+    <link rel="stylesheet" href="../shared/base.css" />
+    <title>F.R.I.D.A.Y. — Note</title>
+    <style>
+      /* Window-specific layout for the daily note-entry tray panel.
+         Tokens come from shared/tokens.css; this file owns only the
+         frame, titlebar, footer hint, and status flash. */
+
+      html, body {
+        height: 100%; width: 100%; overflow: hidden;
+        user-select: none;
+      }
+      .frame {
+        display: flex; flex-direction: column;
+        height: 100%; width: 100%;
+      }
+
+      /* ── Titlebar (drag region + close) ───────────────────────────── */
+      .titlebar {
+        -webkit-app-region: drag;
+        display: flex; align-items: center; justify-content: space-between;
+        padding: var(--space-2) var(--space-3);
+        font-size: 11px; letter-spacing: .8px;
+        color: var(--text-secondary); text-transform: uppercase;
+        border-bottom: 1px solid var(--border-subtle);
+        background: var(--bg-elevated);
+      }
+      .titlebar .date {
+        font-weight: 600; color: var(--text-primary);
+        letter-spacing: .3px; text-transform: none;
+      }
+      .titlebar button {
+        -webkit-app-region: no-drag;
+        background: transparent; border: 0; color: var(--text-secondary);
+        font-size: 14px; padding: 2px 6px; border-radius: 3px;
+      }
+      .titlebar button:hover {
+        background: var(--bg-input); color: var(--text-primary);
+      }
+
+      /* ── Editor (flexes to fill, textarea takes the rest) ─────────── */
+      .editor {
+        flex: 1 1 auto;
+        display: flex;
+        padding: var(--space-3) var(--space-3) var(--space-1);
+        min-height: 0;
+      }
+      textarea {
+        flex: 1;
+        /* Override the shared textarea padding to suit the small panel. */
+        padding: 10px var(--space-3);
+        font-size: 13px;
+        line-height: 1.5;
+        resize: none;
+        overflow-y: auto;
+      }
+
+      /* ── Footer (kbd hints + status flash) ────────────────────────── */
+      .footer {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 6px var(--space-3) 10px;
+        font-size: 11px;
+        color: var(--text-secondary);
+      }
+      .hint kbd {
+        background: var(--bg-input);
+        border: 1px solid var(--border-subtle);
+        border-radius: 3px;
+        padding: 1px 5px;
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        color: var(--text-primary);
+      }
+      .status {
+        min-height: 14px;
+        transition: opacity .25s ease;
+      }
+      .status.ok  { color: var(--accent-teal); }
+      .status.err { color: var(--status-error); }
+      .status.fade { opacity: 0; }
+    </style>
+  </head>
+  <body>
+    <div class="frame">
+      <div class="titlebar">
+        <span class="date" id="date-label">Today</span>
+        <!-- aria-label only — the native HTML tooltip attribute is
+             banned by v0.1.4 (DECISIONS_LOCKED §10). The "Esc close"
+             hint is shown in the footer kbd line, so screen readers
+             carry the only remaining accessibility burden. -->
+        <button id="close-btn" aria-label="Close (Esc)">✕</button>
+      </div>
+      <div class="editor">
+        <textarea
+          id="note-input"
+          placeholder="What's on your mind about today's session?&#10;&#10;Mistakes, wins, feelings, patterns — dump it all."
+          autofocus
+        ></textarea>
+      </div>
+      <div class="footer">
+        <span class="hint"><kbd>Ctrl</kbd>+<kbd>Enter</kbd> save · <kbd>Esc</kbd> close</span>
+        <span class="status" id="status"></span>
+      </div>
+    </div>
+    <script type="module" src="./entry.js"></script>
+  </body>
+</html>

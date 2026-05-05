@@ -1,0 +1,103 @@
+/* ── F.R.I.D.A.Y. Animations ────────────────────────────────────────────────
+ *
+ * Per DECISIONS_LOCKED §11 — animations exist to confirm interaction,
+ * not to entertain. Every transition / keyframe in this file maps
+ * directly to a row in the §11.2 table (button hover, button press,
+ * input focus, modal entry, toast entry, popover, pattern marker).
+ *
+ * Composition rule: duration × easing only. The split tokens (§11.1)
+ * let us reuse the same curve across different durations without
+ * inventing one-off shorthands.
+ *
+ * Anti-pattern guard:
+ *   - No `setInterval` motion — CSS transitions/keyframes only.
+ *   - No infinite animations except the sample-briefing spinner.
+ *   - No bounce on Settings or License surfaces (§11.4).
+ *   - prefers-reduced-motion is non-negotiable (block at the bottom).
+ * ────────────────────────────────────────────────────────────────────── */
+
+/* ── Buttons ──────────────────────────────────────────────────────────────
+ * Hover: background-color tween only (color comes from base.css).
+ * Press: scale-down to 0.97 in 80ms.
+ * Release: spring back via the bounce curve over 150ms.
+ *
+ * The base.css button rules already declare colour transitions; this
+ * block layers the transform feedback on top. */
+button {
+  transition:
+    background-color var(--dur-quick) var(--ease-quick),
+    color            var(--dur-quick) var(--ease-quick),
+    border-color     var(--dur-quick) var(--ease-quick),
+    transform        var(--dur-quick) var(--ease-bounce),
+    box-shadow       var(--dur-quick) var(--ease-quick);
+}
+button:active:not(:disabled) {
+  transform: scale(0.97);
+  transition-duration: var(--dur-instant);
+  transition-timing-function: var(--ease-quick);
+}
+
+/* ── Inputs ───────────────────────────────────────────────────────────────
+ * Focus animates the border colour and the soft teal halo box-shadow.
+ * Both already declared in base.css; we just lock the duration token. */
+input:focus, textarea:focus, select:focus {
+  transition:
+    border-color var(--dur-quick) var(--ease-quick),
+    box-shadow   var(--dur-quick) var(--ease-quick);
+}
+
+/* ── Cards (only when explicitly marked clickable) ───────────────────────
+ * Decoration cards (briefing, sample) stay static. Cards that the user
+ * can act on opt-in via .clickable. */
+.card.clickable {
+  transition:
+    border-color var(--dur-quick) var(--ease-quick),
+    transform    var(--dur-quick) var(--ease-quick);
+}
+.card.clickable:hover {
+  border-color: var(--accent-teal-soft);
+  transform: translateY(-1px);
+}
+
+/* ── Modal / window entry ─────────────────────────────────────────────────
+ * Applied by each renderer's TS via document.body.classList.add('modal-enter')
+ * on DOMContentLoaded. Onboarding intentionally opts out — its screen
+ * transitions already supply motion (§6.3 of the work order). */
+.modal-enter {
+  animation: modalEnter var(--dur-modal) var(--ease-modal) both;
+}
+@keyframes modalEnter {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Toast / status flash ─────────────────────────────────────────────────
+ * Used by the existing save-success indicators in entry/settings. */
+.toast-enter {
+  animation: toastEnter var(--dur-quick) var(--ease-quick) both;
+}
+@keyframes toastEnter {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Pattern markers ──────────────────────────────────────────────────────
+ * The briefing's in-prose markers already carry a dotted/solid border-
+ * bottom from briefing/index.html. The animation here is a hover
+ * affordance: the cursor changes to indicate the marker is interactive
+ * (it triggers a popover). We intentionally do NOT change underline
+ * style on hover — that would conflict with the existing tier-pattern
+ * vs tier-habit visual encoding. */
+.card .card-body span[class*="mark-"] {
+  cursor: pointer;
+}
+
+/* ── prefers-reduced-motion — non-negotiable accessibility (§11.3) ───── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

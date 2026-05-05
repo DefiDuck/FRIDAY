@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-installer/
+out/
+release/
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Local config / secrets
+.env
+.env.local
+.dev-license
+
+# Architecture / research artefacts (kept locally, never committed)
+Research/
+
+# Runtime data files (live in %APPDATA%\friday — never in repo, but defensive)
+secrets.bin
+store.json
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
