@@ -1,0 +1,27 @@
+# <type>(<optional scope>): <subject — imperative, lowercase, no period>
+#
+# Why this change matters (the diff already shows the what). Wrap at 72 cols.
+#
+# Refs: <work order, issue, or doc — optional>
+#
+# ─────────────────────────────────────────────────────────────────────────
+# Allowed types:
+#   feat       new user-facing capability
+#   fix        bug fix
+#   refactor   code shape change; behaviour unchanged
+#   perf       measurable performance win
+#   test       tests added or fixed
+#   docs       README, CHANGELOG, comments, work orders
+#   style      whitespace / formatting only
+#   chore      build, deps, tooling, version bump
+#   revert     undoing a prior commit
+#   security   vulnerability fix, data handling, crypto changes
+#
+# Atomic commit rules (CONTRIBUTING.md):
+#   1. One logical concern per commit.
+#   2. Builds and tests on its own (`npm run build && npm test`).
+#   3. Revertable independently.
+#   4. If "and" appears in your subject, it's probably two commits.
+#
+# Co-authored commits end with:
+#   Co-Authored-By: ClaudeCode <noreply@anthropic.com>
